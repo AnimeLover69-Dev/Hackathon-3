@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
 """
-Utility functions for the YouTube downloader.
+Utility functions for the YouTube Downloader application.
 """
 
 import os
 import re
-import sys
+from enum import Enum
 
 class Color:
     """ANSI color codes for terminal output."""
@@ -13,51 +12,37 @@ class Color:
     GREEN = '\033[92m'
     YELLOW = '\033[93m'
     BLUE = '\033[94m'
-    MAGENTA = '\033[95m'
     CYAN = '\033[96m'
-    WHITE = '\033[97m'
-    RESET = '\033[0m'
+    END = '\033[0m'
 
 def print_colored(text, color):
-    """Print text with specified color."""
-    print(f"{color}{text}{Color.RESET}")
+    """Print text in specified color."""
+    print(f"{color}{text}{Color.END}")
 
-def create_progress_bar(progress, width=50, prefix=""):
-    """Create a text-based progress bar."""
-    filled_length = int(width * progress)
-    bar = '█' * filled_length + '░' * (width - filled_length)
-    percentage = int(100 * progress)
-    
-    # Clear the current line and print the progress bar
-    sys.stdout.write('\r')
-    sys.stdout.write(f"{prefix}|{bar}| {percentage}%")
-    sys.stdout.flush()
-
-def setup_environment():
-    """Set up the necessary directories for downloads."""
-    # Create the main downloads directory
-    downloads_dir = os.path.join(os.getcwd(), "downloads")
-    if not os.path.exists(downloads_dir):
-        os.makedirs(downloads_dir)
-        
-    # Create subdirectories for videos and audio
-    video_dir = os.path.join(downloads_dir, "videos")
-    if not os.path.exists(video_dir):
-        os.makedirs(video_dir)
-        
-    audio_dir = os.path.join(downloads_dir, "audio")
-    if not os.path.exists(audio_dir):
-        os.makedirs(audio_dir)
-        
-    return downloads_dir, video_dir, audio_dir
+def create_progress_bar(progress, prefix="", length=50):
+    """Create a progress bar string."""
+    filled_length = int(length * progress)
+    bar = "█" * filled_length + "░" * (length - filled_length)
+    percentage = int(progress * 100)
+    print(f"\r{prefix}|{bar}| {percentage}%", end="", flush=True)
 
 def sanitize_filename(filename):
-    """Remove illegal characters from filename."""
-    # Replace illegal characters with underscore
-    sanitized = re.sub(r'[\\/*?:"<>|]', "_", filename)
-    # Remove any leading/trailing spaces
-    sanitized = sanitized.strip()
-    # Limit length to avoid too long filenames
-    if len(sanitized) > 100:
-        sanitized = sanitized[:97] + "..."
-    return sanitized
+    """Remove invalid characters from filename."""
+    # Remove invalid characters
+    filename = re.sub(r'[<>:"/\\|?*]', '', filename)
+    # Remove or replace other problematic characters
+    filename = re.sub(r'[\x00-\x1f]', '', filename)
+    # Limit length
+    return filename[:200].strip()
+
+def setup_environment():
+    """Create necessary directories for downloads."""
+    # Create base downloads directory
+    downloads_dir = os.path.join(os.getcwd(), "downloads")
+    os.makedirs(downloads_dir, exist_ok=True)
+    
+    # Create subdirectories for videos and audio
+    video_dir = os.path.join(downloads_dir, "videos")
+    audio_dir = os.path.join(downloads_dir, "audio")
+    os.makedirs(video_dir, exist_ok=True)
+    os.makedirs(audio_dir, exist_ok=True)
